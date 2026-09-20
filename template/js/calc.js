@@ -191,11 +191,13 @@ function formatEspressioneContributi(lista) {
 function calcolaQuoteCondivise(persone, speseCondivise, sconti) {
   const quoteColonna = {};
   const quoteSeparate = {};
+  const quoteSeparateAddendi = {};
   const centesiminiDettaglio = {};
   const totaleCorrente = {};
   persone.forEach(p => {
     quoteColonna[p.nome] = {};
     quoteSeparate[p.nome] = {};
+    quoteSeparateAddendi[p.nome] = {};
     totaleCorrente[p.nome] = totaleConSconti(p, sconti || {});
   });
 
@@ -205,7 +207,15 @@ function calcolaQuoteCondivise(persone, speseCondivise, sconti) {
         quoteColonna[nome][spesa.colonna] = (quoteColonna[nome][spesa.colonna] || 0) + valore;
       }
     } else {
-      if (quoteSeparate[nome] !== undefined) quoteSeparate[nome][spesa.descrizione] = valore;
+      // Più voci di spesa condivisa "separata" con la stessa descrizione vanno sommate
+      // (non sovrascritte) sulla stessa persona: quoteSeparateAddendi tiene traccia dei
+      // singoli addendi in ordine di inserimento, così la UI può mostrarli come "12+8"
+      // nell'unica colonna dedicata a quella descrizione.
+      if (quoteSeparate[nome] !== undefined) {
+        quoteSeparate[nome][spesa.descrizione] = (quoteSeparate[nome][spesa.descrizione] || 0) + valore;
+        if (!quoteSeparateAddendi[nome][spesa.descrizione]) quoteSeparateAddendi[nome][spesa.descrizione] = [];
+        quoteSeparateAddendi[nome][spesa.descrizione].push(valore);
+      }
     }
     if (totaleCorrente[nome] !== undefined) {
       totaleCorrente[nome] += spesa.colonna ? applicaSconto(valore, spesa.colonna, sconti || {}) : valore;
@@ -233,7 +243,7 @@ function calcolaQuoteCondivise(persone, speseCondivise, sconti) {
     }
   });
 
-  return { quoteColonna, quoteSeparate, centesiminiDettaglio };
+  return { quoteColonna, quoteSeparate, quoteSeparateAddendi, centesiminiDettaglio };
 }
 
 // Totale dovuto da una persona in una cena (cibo/bevande/altro + quote condivise, con sconti)

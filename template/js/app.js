@@ -271,11 +271,18 @@ function renderCategoriaTabella(container, cena, categorie, header) {
 function renderCondivise(container, cena) {
   const separate = (cena.speseCondivise || []).filter(s => !s.colonna);
   if (separate.length === 0) { container.innerHTML = "<p><em>Nessuna spesa condivisa separata.</em></p>"; return; }
-  const { quoteSeparate } = calcolaQuoteCondivise(cena.persone, cena.speseCondivise, cena.sconti);
-  let html = `<div class="table-wrap"><table class="cena-table"><thead><tr><th>Persona</th>${separate.map(s => `<th>${escapeHtml(s.descrizione)}</th>`).join("")}</tr></thead><tbody>`;
+  // Più voci con la stessa descrizione condividono un'unica colonna (in ordine di
+  // prima comparsa), invece di generarne una duplicata per ciascuna voce inserita.
+  const descrizioniUniche = [...new Set(separate.map(s => s.descrizione))];
+  const { quoteSeparateAddendi } = calcolaQuoteCondivise(cena.persone, cena.speseCondivise, cena.sconti);
+  let html = `<div class="table-wrap"><table class="cena-table"><thead><tr><th>Persona</th>${descrizioniUniche.map(d => `<th>${escapeHtml(d)}</th>`).join("")}</tr></thead><tbody>`;
   cena.persone.forEach(p => {
-    const qs = quoteSeparate[p.nome] || {};
-    const cells = separate.map(s => `<td>${qs[s.descrizione] !== undefined ? qs[s.descrizione].toFixed(2) : ""}</td>`);
+    const addendi = quoteSeparateAddendi[p.nome] || {};
+    const cells = descrizioniUniche.map(d => {
+      const vals = addendi[d];
+      const cellText = (vals && vals.length) ? vals.map(v => v.toFixed(2)).join("+") : "";
+      return `<td>${cellText}</td>`;
+    });
     html += `<tr><td>${escapeHtml(p.nome)}</td>${cells.join("")}</tr>`;
   });
   html += "</tbody></table></div>";
