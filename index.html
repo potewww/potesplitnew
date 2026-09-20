@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>I miei eventi — Rimborsi</title>
+<link rel="icon" type="image/png" href="img/logo.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="page-header">
+  <h1>PoteSplit</h1>
+  <p>Elenco dei siti di rimborso creati</p>
+</header>
+
+<main>
+  <section class="tab-panel active" style="border-radius:8px;">
+
+
+    <h2>Amministrazione</h2>
+    <p><em>Le funzioni qui sotto richiedono il token amministratore: permette di creare nuovi siti per i rimborsi, rinominarli o eliminarli.</em></p>
+
+    <div class="token-box collapsed" id="token-box">
+      <div class="token-box-header" id="token-box-toggle">
+        <strong>⚙️ Token amministratore GitHub</strong>
+       <button class="btn-gear btn-arrow" type="button" aria-label="Mostra/nascondi">▶</button>
+      </div>
+      <div class="token-box-body">
+        Consigliato: un <strong>fine-grained token</strong> con Resource owner = la tua
+        organization, Repository access = "All repositories", permessi Administration
+        (org) + Contents + Pages in read/write. Così il token non può toccare i tuoi
+        repository personali, solo quelli dell'organization. Vedi il README per i dettagli
+        (e per l'alternativa più semplice ma meno sicura col token classico).
+        Resta salvato solo in questo browser.
+        Oppure più velocemente, cliccando al seguente link <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GeneraToken</a>, si viene reindirizzati al sito per creare il token.
+        <div class="token-input-row">
+          <input type="password" id="gh-token-home" placeholder="github_pat_xxxxxxxxxxxxxxxxxxxx">
+          <button class="btn-icon" type="button" id="btn-toggle-token-home" title="Mostra/nascondi token">👁</button>
+          <button class="btn-icon" type="button" id="btn-copy-token-home" title="Copia token">📋</button>
+        </div>
+        <div style="display:flex; gap:.5rem; flex-wrap:wrap;">
+          <button class="btn-secondary" id="btn-save-token-home" type="button">Salva token</button>
+          <button class="btn-icon delete" id="btn-clear-token-home" type="button">Rimuovi token</button>
+        </div>
+        <div class="status" id="status-token-home"></div>
+      </div>
+    </div>
+
+    <div class="warning-banner" id="config-warning-home" style="display:none">
+      ⚠️ <strong>js/config.js</strong> non è ancora stato configurato con owner/repo/org: finché
+      resta così, la creazione di nuovi eventi non funzionerà. Vedi il README.
+    </div>
+
+    <h3>➕ Crea nuovo evento</h3>
+    <form class="admin-form" id="f-evento-form">
+      <label>Nome evento (es. "Cena di Natale 2026")</label>
+      <input type="text" id="f-evento-nome" placeholder="Es. Cena di Natale 2026" required>
+      <label>Nome repository (generato automaticamente, modificabile)</label>
+      <input type="text" id="f-evento-slug" placeholder="cena-di-natale-2026" required>
+      <button class="btn-primary" type="submit" id="btn-evento-submit">Crea evento</button>
+      <div class="status" id="status-evento"></div>
+    </form>
+
+     <h2>Eventi esistenti</h2>
+    <div class="list-box" id="lista-eventi"></div>
+  </section>
+</main>
+
+<footer><a href="https://potewww.github.io/home.html">potewww | Filippo Rossi</a></footer>
+
+<script src="js/config.js"></script>
+<script src="js/github-home.js"></script>
+<script src="js/app-home.js"></script>
+</body>
+</html>

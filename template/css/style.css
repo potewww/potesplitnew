@@ -1,0 +1,279 @@
+:root {
+  --header: #2b3a55;   /* blu scuro */
+  --accent: #4a6fa5;   /* blu principale */
+  --green: #d9f2df;
+  --red: #fbdada;
+  --gray: #eee;
+  --disc: #c0392b;
+  --orig: #888;
+  --border: #ddd;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  margin: 0; background: #f7f8fa; color: #222;
+}
+header.page-header {
+  background: var(--header); color: white; padding: 1.5rem 1rem; text-align: center;
+}
+header.page-header h1 { margin: 0 0 .3rem; font-size: 1.6rem; }
+header.page-header p { margin: 0; opacity: .85; font-size: .9rem; }
+
+nav.tabs {
+  display: flex; flex-wrap: wrap; gap: .3rem; padding: .8rem 1rem 0; max-width: 1000px; margin: 0 auto;
+}
+.tab-btn {
+  background: white; border: 1px solid var(--border); border-bottom: none;
+  padding: .6rem 1rem; cursor: pointer; border-radius: 8px 8px 0 0; font-size: .9rem;
+}
+.tab-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+
+.tab-btn-home {
+  background: white; border: 1px solid var(--border); border-bottom: none;
+  border-radius: 8px 8px 0 0; width: 2.4rem; height: 2.4rem;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; text-decoration: none; flex-shrink: 0;
+}
+.tab-btn-home:hover { background: var(--accent); }
+
+main { max-width: 1000px; margin: 0 auto; padding: 1rem; }
+.tab-panel { display: none; background: white; padding: 1.2rem; border-radius: 0 8px 8px 8px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+.tab-panel.active { display: block; }
+
+h2 { color: var(--header); border-bottom: 2px solid var(--accent); padding-bottom: .3rem; margin-top: 2rem;}
+h2:first-child { margin-top: 0; }
+h3 { color: var(--accent); margin-top: 1.5rem; }
+h4 { margin-bottom: .3rem; }
+h5 { margin: .8rem 0 .3rem; color: #555; }
+
+table { width: 100%; border-collapse: collapse; margin: .6rem 0 1.2rem; font-size: .88rem; }
+table th, table td { border: 1px solid var(--border); padding: .4rem .5rem; text-align: left; }
+table th { background: var(--header); color: white; }
+td.num, th.num { text-align: right; }
+.row-red { background: var(--red); }
+.row-green { background: var(--green); }
+.row-gray { background: var(--gray); }
+.row-stripe { background: #f0f4f9; }
+.tot-row, .tot-cell { background: #eef2f7; font-weight: bold; }
+
+.disc { color: var(--disc); font-weight: 600; }
+.orig { color: var(--orig); font-size: .85em; }
+
+.legend { display: flex; gap: 1rem; flex-wrap: wrap; margin: .6rem 0; font-size: .85rem; }
+.legend span { padding: .1rem .5rem; border-radius: 4px; }
+
+details.cena-block { border: 1px solid var(--border); border-radius: 8px; margin-bottom: .8rem; padding: .5rem 1rem; }
+details.cena-block summary { cursor: pointer; font-weight: bold; font-size: 1.05rem; color: var(--header); padding: .4rem 0; }
+.sconti-info { font-size: .85rem; color: #555; }
+
+.evento-solata { font-size: .85rem; padding: .5rem .7rem; border-radius: 6px; margin: .4rem 0 .8rem; }
+.evento-solata.tipo-solata { background: #fff3cd; color: #7a5b00; }
+.evento-solata.tipo-controsolata { background: #e6eefb; color: #1e3a6f; }
+.evento-solata.tipo-nessuna { background: #eee; color: #666; font-style: italic; }
+
+.cena-table th, .cena-table td { font-size: .82rem; }
+
+form.admin-form { display: flex; flex-direction: column; gap: .6rem; margin-bottom: 1.5rem; }
+form.admin-form label { font-size: .85rem; font-weight: 600; color: #333; }
+form.admin-form input, form.admin-form select {
+  padding: .5rem; border: 1px solid var(--border); border-radius: 6px; font-size: .9rem; width: 100%;
+}
+.persona-checkboxes, .cena-spesa-partecipanti { display: flex; flex-wrap: wrap; gap: .4rem .8rem; padding: .5rem; border: 1px solid var(--border); border-radius: 6px; max-height: 140px; overflow-y: auto; }
+.sconti-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: .3rem; padding: .5rem; border: 1px solid var(--border); border-radius: 6px; align-items: end; }
+.sconti-grid .cp-field label { font-weight: 600; }
+.sconti-grid input { width: 100% !important; }
+.chk { font-weight: normal !important; display: flex; align-items: center; gap: .3rem; font-size: .85rem !important; }
+.chk input { width: auto !important; }
+
+button.btn-primary {
+  background: var(--accent); color: white; border: none; padding: .6rem 1.2rem;
+  border-radius: 6px; cursor: pointer; font-size: .9rem; align-self: flex-start;
+}
+button.btn-primary:hover { background: var(--header); }
+button.btn-remove-row { background: #e74c3c; color: white; border: none; border-radius: 4px; padding: .3rem .5rem; cursor: pointer; }
+button.btn-secondary { background: white; border: 1px solid var(--accent); color: var(--accent); padding: .4rem .8rem; border-radius: 6px; cursor: pointer; align-self: flex-start; }
+
+.status { font-size: .85rem; padding: .4rem; border-radius: 4px; min-height: 1.2rem; }
+.status-ok { background: #d9f2df; color: #1e7a34; }
+.status-error { background: #fbdada; color: #b02a2a; }
+
+#cena-persone-checkboxes, #f-spesa-partecipanti, #f-spesa-pagatori-check, #cena-pagatori-check {
+  display: flex; flex-wrap: wrap; gap: .4rem .8rem; padding: .5rem;
+  border: 1px solid var(--border); border-radius: 6px; max-height: 160px; overflow-y: auto;
+}
+
+.cena-persone-details {
+  border: 1px solid var(--border); border-radius: 8px; padding: .7rem .9rem; margin: 0;
+}
+.cena-persone-details-header {
+  display: flex; align-items: center; justify-content: space-between; gap: .6rem; cursor: pointer;
+}
+.cena-persone-details-header strong { flex: 1; font-size: .85rem; color: var(--header); }
+.cena-persone-details-body { margin-top: .8rem; display: flex; flex-direction: column; gap: .4rem; }
+.cena-persone-details.collapsed .cena-persone-details-body { display: none; }
+.cena-persone-details.collapsed .cena-persone-details-header { margin: 0; }
+
+/* Freccia che ruota in base allo stato aperto/chiuso della sezione (funziona per
+   qualunque contenitore che usi la classe .collapsed, non solo per le cene) */
+.btn-arrow {
+  transition: transform .18s ease;
+  transform: rotate(90deg); /* aperta di default: freccia verso il basso */
+}
+.collapsed .btn-arrow {
+  transform: rotate(0deg); /* chiusa: freccia punta a destra */
+}
+
+/* Sezioni estendibili generiche (Aggiungi spesa / spesa non equa / rimborso / cena, ecc.) */
+.collapsible-section { border: 1px solid var(--border); border-radius: 8px; margin: 1.5rem 0; overflow: hidden; }
+.collapsible-header {
+  display: flex; align-items: center; justify-content: space-between; gap: .6rem;
+  cursor: pointer; padding: .8rem 1rem; background: #f7f8fa;
+}
+.collapsible-header strong { font-size: 1rem; color: var(--accent); }
+.collapsible-body { padding: 0 1rem 1rem; }
+.collapsible-section.collapsed .collapsible-body { display: none; }
+.collapsible-section.collapsed .collapsible-header { border-bottom: none; }
+
+.cena-persona-row {
+  border: 1px dashed var(--border); padding: .6rem; border-radius: 6px; margin-bottom: .4rem;
+}
+.cp-persona-titolo { font-weight: 700; color: var(--header); margin-bottom: .4rem; }
+/* auto-fill (non auto-fit) + nessun elemento con grid-column:span dentro alla griglia:
+   evita il bug per cui, a certe larghezze, un campo (es. "Antipasto") finiva da solo
+   nell'ultima colonna disponibile e il campo successivo (es. "Primi") veniva spinto
+   sulla riga sotto, sembrando "impilato" invece che affiancato. */
+.cp-fields-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: .3rem;
+  align-items: end;
+}
+.cena-spesa-row {
+  display: grid; grid-template-columns: 2fr 1.3fr 1fr 1fr 2fr auto; gap: .3rem;
+  align-items: end; border: 1px dashed var(--border); padding: .5rem; border-radius: 6px; margin-bottom: .4rem;
+}
+.cp-field { display: flex; flex-direction: column; gap: .15rem; }
+.cp-field label { font-size: .68rem; font-weight: 600; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cp-field input, .cp-field select { width: 100%; padding: .3rem; border: 1px solid var(--border); border-radius: 5px; font-size: .82rem; }
+
+/* righe della spesa non equa (persona + quota) */
+.spesa-ne-row {
+  display: grid; grid-template-columns: 1.4fr 1fr auto; gap: .4rem; align-items: center;
+  padding: .4rem .5rem; border: 1px dashed var(--border); border-radius: 6px; margin-bottom: .3rem;
+}
+.spesa-ne-row label { font-size: .85rem; font-weight: normal; }
+.spesa-ne-row input[type="number"] { width: 100%; }
+
+.token-box { background: #fff8e6; border: 1px solid #e8d284; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; }
+.token-box input { width: 100%; padding: .5rem; margin: .5rem 0; border: 1px solid var(--border); border-radius: 6px; }
+
+.token-input-row { display: flex; gap: .4rem; align-items: center; margin: .5rem 0; }
+.token-input-row input { flex: 1; margin: 0 !important; }
+.token-input-row .btn-icon { flex-shrink: 0; padding: .5rem .6rem; }
+
+.token-box-header {
+  display: flex; align-items: center; justify-content: space-between; gap: .6rem; cursor: pointer;
+}
+.token-box-header strong { flex: 1; }
+.btn-gear {
+  width: 34px; height: 34px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--accent); background: white; color: var(--accent); border-radius: 6px;
+  cursor: pointer; font-size: 1.05rem; padding: 0; line-height: 1;
+}
+.btn-gear:hover { background: var(--accent); color: white; }
+.token-box-body { margin-top: .8rem; }
+.token-box.collapsed .token-box-body { display: none; }
+.token-box.collapsed .token-box-header { margin: 0; }
+
+.list-box { margin-bottom: 1.5rem; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.list-row {
+  display: flex; align-items: center; justify-content: space-between; gap: .6rem;
+  padding: .5rem .7rem; border-bottom: 1px solid var(--border); font-size: .85rem; background: white;
+}
+.list-row:last-child { border-bottom: none; }
+.list-row:nth-child(even) { background: #f8f9fb; }
+.list-row .list-main { flex: 1; }
+.list-row .list-sub { color: #888; font-size: .8rem; }
+.list-row .list-actions { display: flex; gap: .4rem; flex-shrink: 0; }
+.list-row.editing { background: #fff8e6; }
+.btn-icon {
+  border: 1px solid var(--border); background: white; border-radius: 5px; padding: .3rem .55rem;
+  cursor: pointer; font-size: .8rem;
+}
+.btn-icon.edit { color: var(--accent); border-color: var(--accent); }
+.btn-icon.delete { color: #c0392b; border-color: #c0392b; }
+.btn-icon:hover { filter: brightness(0.95); }
+.rename-box { display: flex; gap: .4rem; align-items: center; flex: 1; }
+.rename-box input { flex: 1; padding: .3rem .5rem; border: 1px solid var(--border); border-radius: 5px; }
+.empty-note { padding: .6rem .7rem; color: #999; font-size: .85rem; font-style: italic; }
+
+.warning-banner {
+  background: #fff3cd; border: 1px solid #e0b84a; color: #7a5b00;
+  padding: .8rem 1rem; border-radius: 8px; margin-bottom: 1.2rem; font-size: .88rem;
+}
+
+.toast-box {
+  position: fixed; top: 1rem; left: 50%; transform: translateX(-50%);
+  z-index: 9999; display: flex; flex-direction: column; gap: .5rem;
+  width: min(92vw, 420px); pointer-events: none;
+}
+.toast {
+  padding: .7rem 1rem; border-radius: 8px; font-size: .88rem; box-shadow: 0 3px 10px rgba(0,0,0,.18);
+  opacity: 0; transform: translateY(-12px); transition: opacity .25s, transform .25s; pointer-events: auto;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast-ok { background: #1e7a34; color: white; }
+.toast-error { background: #b02a2a; color: white; }
+
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: .6rem 0 1.2rem; border-radius: 6px; }
+.table-wrap table { margin: 0; }
+
+/* ===================== RESPONSIVE / MOBILE ===================== */
+@media (max-width: 680px) {
+  html, body { overflow-x: hidden; }
+  header.page-header { padding: 1.1rem .8rem; }
+  header.page-header h1 { font-size: 1.25rem; }
+  header.page-header p { font-size: .8rem; }
+
+  nav.tabs { padding: .6rem .5rem 0; gap: .25rem; }
+  .tab-btn { flex: 1 1 auto; padding: .5rem .4rem; font-size: .78rem; }
+
+  main { padding: .6rem; }
+  .tab-panel { padding: .8rem .7rem; }
+
+  h2 { font-size: 1.05rem; margin-top: 1.4rem; }
+  h3 { font-size: .98rem; }
+  h4, h5 { font-size: .88rem; }
+
+  table th, table td { padding: .32rem .4rem; font-size: .76rem; }
+  .cena-table th, .cena-table td { font-size: .72rem; padding: .28rem .32rem; }
+
+  .legend { font-size: .78rem; gap: .5rem; }
+
+  details.cena-block { padding: .4rem .6rem; }
+  details.cena-block summary { font-size: .92rem; }
+
+  /* Tutti i form: input più grandi per evitare lo zoom automatico di iOS Safari */
+  form.admin-form input, form.admin-form select, .sconti-grid input { font-size: 16px; }
+
+  .list-row { flex-direction: column; align-items: stretch; gap: .5rem; }
+  .list-row .list-actions { justify-content: flex-end; }
+  .rename-box { flex-direction: column; align-items: stretch; }
+
+  .cena-persona-row { padding: .4rem; }
+  .cp-fields-grid { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: .25rem; }
+  .cena-persona-row input, .cena-persona-row select { font-size: 16px; padding: .3rem; }
+
+  .cena-spesa-row { grid-template-columns: 1fr !important; gap: .4rem; }
+  .spesa-ne-row { grid-template-columns: 1fr !important; gap: .3rem; }
+
+  .sconti-grid { grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); }
+  .persona-checkboxes, .cena-spesa-partecipanti { max-height: 110px; }
+  #cena-persone-checkboxes, #f-spesa-partecipanti, #f-spesa-pagatori-check, #cena-pagatori-check { max-height: 130px; }
+
+  .token-box { padding: .8rem; font-size: .85rem; }
+
+  .toast-box { top: .5rem; width: 94vw; }
+}
+
+footer { text-align: center; padding: 1.5rem; font-size: .8rem; color: #999; }
+footer a { color: inherit; text-decoration: none; }
+footer a:hover { text-decoration: underline; }

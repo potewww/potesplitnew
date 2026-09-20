@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rimborsi</title>
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Rimborsi">
+  <meta property="og:description" content="Registro spese, rimborsi e transazioni">
+  <meta property="og:image" content="https://potewww.github.io/potesplit/img/logo.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Rimborsi">
+  <meta name="twitter:description" content="Registro spese, rimborsi e transazioni">
+  <link rel="icon" type="image/png" href="https://potewww.github.io/potesplit/img/logo.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="page-header">
+  <h1 id="page-title">Rimborsi</h1>
+  <p>Registro spese, rimborsi e transazioni</p>
+</header>
+
+<nav class="tabs">
+  <a class="tab-btn-home" id="btn-home-link" href="#" title="Torna alla home">🏠</a>
+  <button class="tab-btn active" data-tab="tab-riepilogo">Riepilogo</button>
+  <button class="tab-btn" data-tab="tab-dettaglio">Spese in dettaglio</button>
+  <button class="tab-btn" data-tab="tab-gestisci">Gestisci dati</button>
+</nav>
+
+<main>
+
+  <!-- ===================== TAB RIEPILOGO ===================== -->
+  <section id="tab-riepilogo" class="tab-panel active">
+
+    <h2>Registro completo spese</h2>
+    <div class="table-wrap">
+    <table id="tbl-registro">
+      <thead><tr><th>N.</th><th>Chi ha pagato</th><th>Titolo spesa</th><th class="num">Importo</th><th>Partecipanti</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    </div>
+    <p><em>La dicitura "[NE]" (acronimo per "Non Equo") indica che l'importo anticipato per una cena (o per una spesa generale non equa) non è diviso in parti uguali, ma secondo quanto stabilito manualmente per ciascuna persona.</em></p>
+
+    <h2>Rimborsi già effettuati</h2>
+    <div class="table-wrap">
+    <table id="tbl-rimborsi">
+      <thead><tr><th>N.</th><th>Chi ha pagato</th><th>Chi ha ricevuto</th><th class="num">Importo</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    </div>
+
+    <h2>Totali per persona</h2>
+    <div class="table-wrap">
+    <table id="tbl-totali">
+      <thead><tr><th>N.</th><th>Nome</th><th class="num">Ha pagato</th><th class="num">Ha speso</th><th class="num">Rimborsi dati</th><th class="num">Rimborsi ricevuti</th><th class="num">Saldo</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    </div>
+    <div class="legend">
+      <span class="row-green">Verde: deve ricevere soldi</span>
+      <span class="row-red">Rosso: deve dare soldi</span>
+      <span class="row-gray">Grigio: in pari</span>
+    </div>
+
+    <h2>Transazioni da effettuare</h2>
+    <p><em>Transazioni ottimizzate per minimizzare il numero di pagamenti. Attenzione: potresti dover dare soldi a più di una persona.</em></p>
+    <div class="table-wrap">
+    <table id="tbl-transazioni">
+      <thead><tr><th>N.</th><th>Chi dà</th><th>Chi riceve</th><th class="num">Importo</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    </div>
+
+    <h2>Credenziali per rimborsi:</h2>
+    <ul id="credenziali-list"></ul>
+  </section>
+
+  <!-- ===================== TAB CENE ===================== -->
+  <section id="tab-dettaglio" class="tab-panel">
+    <h2>Spese in dettaglio</h2>
+    <p><em>Se una spesa non è divisibile esattamente (es. dividendo per 3), gli importi vengono arrotondati per difetto al centesimo e i centesimi restanti assegnati a chi, al momento del calcolo, sta spendendo di meno: è normale che due persone con la stessa spesa "sulla carta" abbiano un centesimo di differenza. Se il totale anticipato per una spesa/cena non coincide con il dovuto calcolato, la differenza viene ridistribuita automaticamente (solata se si è pagato di più, controsolata se si è pagato di meno).</em></p>
+
+    <h3>Cene</h3>
+    <div id="cene-container"></div>
+
+    <h3>Altre spese (equa e non equa)</h3>
+    <div id="spese-dettaglio-container"></div>
+  </section>
+
+  <!-- ===================== TAB GESTISCI ===================== -->
+  <section id="tab-gestisci" class="tab-panel">
+    <h2>Gestisci dati</h2>
+    <div class="warning-banner" id="config-warning" style="display:none">
+      ⚠️ <strong>js/config.js</strong> non è ancora stato configurato con il tuo username e nome del repository GitHub: finché resta così, nessun salvataggio funzionerà. Vedi il README.
+    </div>
+
+    <div class="token-box collapsed" id="token-box">
+      <div class="token-box-header" id="token-box-toggle">
+        <strong>⚙️ Token GitHub</strong>
+        <button class="btn-gear btn-arrow" type="button" aria-label="Mostra/nascondi">▶</button>
+      </div>
+      <div class="token-box-body">
+        <p>
+  Istruzioni amministratore:
+  <br>Accedere su GitHub → Settings → Developer settings → Personal access tokens (fine-grained, con permesso "Contents: Read and write" sul repo). Il token resta salvato solo in questo browser (non su GitHub Pages, non visibile ad altri visitatori) e rimane impostato anche se chiudi la pagina o il browser, finché non lo rimuovi.
+  Oppure più velocemente, cliccando al seguente link <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GeneraToken</a>, si viene reindirizzati al sito per creare il token.
+</p>
+
+<p>
+  Istruzioni utenti:
+  <br>Inserire nello spazio sottostante il token fornito dall'amministratore. Una volta fatto, chiudere il menù a tendina e non modificare più il campo.
+</p>
+        <div class="token-input-row">
+          <input type="password" id="gh-token" placeholder="github_pat_xxxxxxxxxxxxxxxxxxxx">
+          <button class="btn-icon" type="button" id="btn-toggle-token" title="Mostra/nascondi token">👁</button>
+          <button class="btn-icon" type="button" id="btn-copy-token" title="Copia token">📋</button>
+        </div>
+        <div style="display:flex; gap:.5rem; flex-wrap:wrap;">
+          <button class="btn-secondary" id="btn-save-token" type="button">Salva token (permanente)</button>
+          <button class="btn-icon delete" id="btn-clear-token" type="button">Rimuovi token</button>
+        </div>
+        <div class="status" id="status-token"></div>
+      </div>
+    </div>
+
+    <div class="collapsible-section collapsed" id="sec-persona">
+      <div class="collapsible-header" data-toggle="sec-persona">
+        <strong>👤 Aggiungi persona</strong>
+        <button class="btn-gear btn-arrow" type="button" aria-label="Mostra/nascondi">▶</button>
+      </div>
+      <div class="collapsible-body">
+        <form class="admin-form" id="f-persona-form">
+          <label>Quante persone vuoi aggiungere?</label>
+          <select id="f-persona-quante">
+            <option value="1" selected>1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+          </select>
+          <label>Nome e cognome</label>
+          <div id="f-persona-nomi-container"></div>
+          <button class="btn-primary" type="submit">Aggiungi persona/e</button>
+          <div class="status" id="status-persona"></div>
+        </form>
+      </div>
+    </div>
+
+    <h4>Persone esistenti</h4>
+    <div class="list-box" id="lista-persone"></div>
+
+    <div class="collapsible-section collapsed" id="sec-spesa">
+      <div class="collapsible-header" data-toggle="sec-spesa">
+        <strong>🛒 Aggiungi spesa</strong>
+        <button class="btn-gear btn-arrow" type="button" aria-label="Mostra/nascondi">▶</button>
+      </div>
+      <div class="collapsible-body">
+        <form class="admin-form" id="f-spesa-form">
+          <label>Titolo spesa</label>
+          <input type="text" id="f-spesa-titolo" placeholder="Es. Spesa bibite" required>
+
+          <label>Partecipanti alla spesa (spunta chi partecipa — di default sono tutte spuntate)</label>
+          <div id="f-spesa-partecipanti"></div>
+
+          <label>Metodo di divisione</label>
+          <div style="display:flex; gap:1.2rem; flex-wrap:wrap;">
+            <label class="chk"><input type="radio" name="f-spesa-modo" id="f-spesa-modo-equa" value="equa" checked> Divisione equa tra i partecipanti</label>
+            <label class="chk"><input type="radio" name="f-spesa-modo" id="f-spesa-modo-nonequa" value="nonequa"> Divisione non equa (quote personalizzate)</label>
+          </div>
+
+          <div id="f-spesa-quote-box" style="display:none">
+            <label>Quota dovuta da ciascun partecipante selezionato (€)</label>
+            <div id="f-spesa-quote-righe"></div>
+            <div class="status" id="status-spesa-quote-tot"></div>
+          </div>
+
+          <label>Chi ha anticipato i soldi (spunta chi ha pagato — di default nessuno è spuntato)</label>
+          <div id="f-spesa-pagatori-check"></div>
+          <div id="f-spesa-pagatori-righe"></div>
+          <div class="status" id="status-spesa-pagatori-tot"></div>
+
+          <button class="btn-primary" type="submit" id="btn-spesa-submit">Aggiungi spesa</button>
+          <button class="btn-secondary" type="button" id="btn-spesa-annulla" style="display:none">Annulla modifica</button>
+          <div class="status" id="status-spesa"></div>
+        </form>
+      </div>
+    </div>
+
+    <h4>Spese esistenti</h4>
+    <div class="list-box" id="lista-spese"></div>
+
+    <div class="collapsible-section collapsed" id="sec-rimborso">
+      <div class="collapsible-header" data-toggle="sec-rimborso">
+        <strong>💸 Aggiungi rimborso</strong>
+        <button class="btn-gear btn-arrow" type="button" aria-label="Mostra/nascondi">▶</button>
+      </div>
+      <div class="collapsible-body">
+        <form class="admin-form" id="f-rimborso-form">
+          <label>Chi dà (ha rimborsato)</label>
+          <select class="persona-select" id="f-rimb-da"></select>
+          <label>Chi riceve</label>
+          <select class="persona-select" id="f-rimb-a"></select>
+          <label>Importo (€)</label>
+          <input type="number" step="0.01" min="0.01" id="f-rimb-importo" required>
+          <button class="btn-primary" type="submit" id="btn-rimborso-submit">Aggiungi rimborso</button>
+          <button class="btn-secondary" type="button" id="btn-rimborso-annulla" style="display:none">Annulla modifica</button>
+          <div class="status" id="status-rimborso"></div>
+        </form>
+      </div>
+    </div>
+
+    <h4>Rimborsi esistenti</h4>
+    <div class="list-box" id="lista-rimborsi"></div>
+
+    <div class="collapsible-section collapsed" id="sec-cena">
+      <div class="collapsible-header" data-toggle="sec-cena">
+        <strong>🍲 Aggiungi cena</strong>
+        <button class="btn-gear btn-arrow" type="button" aria-label="Mostra/nascondi">▶</button>
+      </div>
+      <div class="collapsible-body">
+        <form class="admin-form" id="f-cena-form">
+          <label>Titolo cena</label>
+          <input type="text" id="f-cena-titolo" placeholder="Es. Cena di Natale" required>
+
+          <label>Persone alla cena (spunta chi partecipa — di default sono tutte spuntate)</label>
+          <div id="cena-persone-checkboxes"></div>
+
+          <label>Sconti per categoria (%)</label>
+          <div class="sconti-grid" id="sconti-grid-container"></div>
+
+          <div class="cena-persone-details collapsed" id="cena-persone-details">
+            <div class="cena-persone-details-header" id="cena-persone-details-toggle">
+              <strong>Spese individuali per persona (voci consumate)</strong>
+              <button class="btn-gear btn-arrow" type="button" aria-label="Mostra/nascondi spese individuali">▶</button>
+            </div>
+            <div class="cena-persone-details-body">
+              <div id="cena-persone-rows"></div>
+            </div>
+          </div>
+
+          <label>Spese condivise (piatti/bevande in comune, coperto, ecc.)</label>
+          <p><em>Se non selezioni nessun partecipante per una spesa condivisa, viene considerata per tutti i partecipanti alla cena.</em></p>
+          <div id="cena-spese-rows"></div>
+          <button class="btn-secondary" type="button" id="btn-add-cena-spesa">+ Aggiungi spesa condivisa</button>
+
+          <label>Chi ha anticipato i soldi per questa cena (spunta chi ha pagato — di default nessuno è spuntato)</label>
+          <p><em>Non è detto che chi anticipa i soldi debba anche partecipare alla cena: la spesa viene comunque divisa esclusivamente tra i partecipanti selezionati sopra.</em></p>
+          <div id="cena-pagatori-check"></div>
+          <div id="cena-pagatori-righe"></div>
+          <div class="status" id="status-cena-pagatori-tot"></div>
+
+          <button class="btn-primary" type="submit" id="btn-cena-submit">Salva cena</button>
+          <button class="btn-secondary" type="button" id="btn-cena-annulla" style="display:none">Annulla modifica</button>
+          <div class="status" id="status-cena"></div>
+        </form>
+      </div>
+    </div>
+
+    <h4>Cene esistenti</h4>
+    <div class="list-box" id="lista-cene"></div>
+
+    <div class="collapsible-section collapsed" id="sec-credenziale">
+      <div class="collapsible-header" data-toggle="sec-credenziale">
+        <strong>📝 Aggiungi/modifica credenziali rimborso</strong>
+        <button class="btn-gear btn-arrow" type="button" aria-label="Mostra/nascondi">▶</button>
+      </div>
+      <div class="collapsible-body">
+        <p><em>Per ogni persona puoi salvare un link PayPal oppure un IBAN + nome intestatario,
+          da mostrare nella pagina Riepilogo a chi deve farle un rimborso.</em></p>
+        <form class="admin-form" id="f-credenziale-form">
+          <label>Persona</label>
+          <select class="persona-select" id="f-cred-persona"></select>
+
+          <label>Tipo di credenziale</label>
+          <select id="f-cred-tipo">
+            <option value="paypal">Link PayPal</option>
+            <option value="iban">IBAN + Intestatario</option>
+          </select>
+
+          <div id="f-cred-campi-paypal">
+            <label>Link PayPal</label>
+            <input type="text" id="f-cred-paypal" placeholder="https://www.paypal.me/tuonome">
+          </div>
+
+          <div id="f-cred-campi-iban" style="display:none">
+            <label>IBAN</label>
+            <input type="text" id="f-cred-iban" placeholder="IT00X0000000000000000000000">
+            <label>Nome intestatario</label>
+            <input type="text" id="f-cred-intestatario" placeholder="Es. Mario Rossi">
+          </div>
+
+          <button class="btn-primary" type="submit" id="btn-cred-submit">Salva credenziali</button>
+          <button class="btn-secondary" type="button" id="btn-cred-annulla" style="display:none">Annulla modifica</button>
+          <div class="status" id="status-cred"></div>
+        </form>
+      </div>
+    </div>
+
+    <h4>Credenziali esistenti</h4>
+    <div class="list-box" id="lista-credenziali"></div>
+  </section>
+
+</main>
+
+<footer><a href="https://potewww.github.io/home.html">potewww | Filippo Rossi</a></footer>
+
+<script src="js/config.js"></script>
+<script src="js/calc.js"></script>
+<script src="js/github.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
