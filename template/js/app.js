@@ -121,7 +121,8 @@ function renderRegistroSpese() {
   });
   ordinate.forEach((s, i) => {
     const part = formatPartecipanti(s.partecipanti);
-    const tr = el("tr", null, `<td>${i + 1}</td><td>${escapeHtml(s.nome)}</td><td>${escapeHtml(s.descrizione)}</td><td class="num">${euro(s.importo)}</td><td>${escapeHtml(part)}</td>`);
+    const dataFmt = formatDataIt(s.data);
+    const tr = el("tr", null, `<td>${i + 1}</td><td>${escapeHtml(s.nome)}</td><td>${escapeHtml(s.descrizione)}</td><td>${escapeHtml(dataFmt)}</td><td class="num">${euro(s.importo)}</td><td>${escapeHtml(part)}</td>`);
     tbody.appendChild(tr);
   });
 }
@@ -332,8 +333,9 @@ function renderCene() {
   if (STATE.cene.length === 0) { container.innerHTML = `<p class="empty-note">Nessuna cena inserita.</p>`; return; }
   STATE.cene.forEach((cena, idx) => {
     const hasSconti = Object.values(cena.sconti).some(v => v > 0);
+    const dataFmt = formatDataIt(cena.data);
     const wrap = el("details", "cena-block");
-    wrap.innerHTML = `<summary>${escapeHtml(cena.titolo)}</summary>
+    wrap.innerHTML = `<summary>${escapeHtml(cena.titolo)}${dataFmt ? ` — 📅 ${escapeHtml(dataFmt)}` : ""}</summary>
       <div class="cena-body">
         ${hasSconti ? `<p class="sconti-info"><strong>Sconti applicati:</strong> ${Object.entries(cena.sconti).filter(([, v]) => v > 0).map(([k, v]) => `${k}: ${v}%`).join(", ")}</p>` : `<p class="sconti-info"><em>Nessuno sconto applicato</em></p>`}
         <h5>Cibo</h5><div class="tbl-cibo"></div>
@@ -361,7 +363,7 @@ function raggruppaDettaglioSpeseGenerali() {
     if (s.gruppoId && s.gruppoId.startsWith("__cena_")) return;
     const gid = s.gruppoId || `__voce_singola_${i}`;
     if (!mappa[gid]) {
-      const g = { gruppoId: gid, descrizione: s.descrizione, isNE: !!s.quote, pagatori: [], partecipanti: s.partecipanti || [] };
+            const g = { gruppoId: gid, descrizione: s.descrizione, isNE: !!s.quote, pagatori: [], partecipanti: s.partecipanti || [], data: s.data || null };
       mappa[gid] = g;
       gruppi.push(g);
     }
@@ -427,10 +429,11 @@ function renderSpeseDettaglio() {
   const gruppi = raggruppaDettaglioSpeseGenerali();
   if (gruppi.length === 0) { container.innerHTML = `<p class="empty-note">Nessuna altra spesa inserita.</p>`; return; }
   gruppi.forEach(g => {
-    const totalePagato = g.pagatori.reduce((a, p) => a + p.importo, 0);
+       const totalePagato = g.pagatori.reduce((a, p) => a + p.importo, 0);
+    const dataFmt = formatDataIt(g.data);
     const wrap = el("details", "cena-block");
-    wrap.innerHTML = `<summary>${escapeHtml(baseTitolo(g.descrizione))} — ${euro(totalePagato)}${g.isNE ? " [NE]" : " (divisa in parti uguali)"}</summary>
-      <div class="cena-body">
+    wrap.innerHTML = `<summary>${escapeHtml(baseTitolo(g.descrizione))} — ${euro(totalePagato)}${g.isNE ? " [NE]" : " (divisa in parti uguali)"}${dataFmt ? ` — 📅 ${escapeHtml(dataFmt)}` : ""}</summary>
+   <div class="cena-body">
         <div class="tbl-riepilogo-spesa"></div>
       </div>`;
     container.appendChild(wrap);
