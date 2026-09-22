@@ -323,7 +323,7 @@ function integraCenaInSpese(cena, gruppoId) {
   const nuoveSpese = [];
   (cena.pagatori || []).forEach(pag => {
     if (pag.importo > 0) {
-        nuoveSpese.push({
+      nuoveSpese.push({
         nome: pag.nome,
         descrizione: cena.titolo + " [NE]",
         importo: pag.importo,

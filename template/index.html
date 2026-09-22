@@ -36,7 +36,7 @@
     <h2>Registro completo spese</h2>
     <div class="table-wrap">
     <table id="tbl-registro">
-      <thead><tr><th>N.</th><th>Chi ha pagato</th><th>Titolo spesa</th><th class="num">Importo</th><th>Partecipanti</th></tr></thead>
+      <thead><tr><th>N.</th><th>Chi ha pagato</th><th>Titolo spesa</th><th>Data</th><th class="num">Importo</th><th>Partecipanti</th></tr></thead>
       <tbody></tbody>
     </table>
     </div>
@@ -45,7 +45,7 @@
     <h2>Rimborsi già effettuati</h2>
     <div class="table-wrap">
     <table id="tbl-rimborsi">
-      <thead><tr><th>N.</th><th>Chi ha pagato</th><th>Titolo spesa</th><th>Data</th><th class="num">Importo</th><th>Partecipanti</th></tr></thead>      
+      <thead><tr><th>N.</th><th>Chi ha pagato</th><th>Chi ha ricevuto</th><th>Data</th><th class="num">Importo</th></tr></thead>
       <tbody></tbody>
     </table>
     </div>
@@ -211,6 +211,8 @@
           <select class="persona-select" id="f-rimb-a"></select>
           <label>Importo (€)</label>
           <input type="number" step="0.01" min="0.01" id="f-rimb-importo" required>
+          <label>Data (facoltativa)</label>
+          <input type="date" id="f-rimb-data">
           <button class="btn-primary" type="submit" id="btn-rimborso-submit">Aggiungi rimborso</button>
           <button class="btn-secondary" type="button" id="btn-rimborso-annulla" style="display:none">Annulla modifica</button>
           <div class="status" id="status-rimborso"></div>

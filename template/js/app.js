@@ -131,11 +131,12 @@ function renderRimborsiEffettuati() {
   const tbody = document.querySelector("#tbl-rimborsi tbody");
   tbody.innerHTML = "";
   if (STATE.rimborsi.length === 0) {
-    tbody.appendChild(el("tr", null, `<td colspan="4"><em>Nessun rimborso ancora effettuato.</em></td>`));
+    tbody.appendChild(el("tr", null, `<td colspan="5"><em>Nessun rimborso ancora effettuato.</em></td>`));
     return;
   }
   STATE.rimborsi.forEach((r, i) => {
-    tbody.appendChild(el("tr", null, `<td>${i + 1}</td><td>${escapeHtml(r.da)}</td><td>${escapeHtml(r.a)}</td><td class="num">${euro(r.importo)}</td>`));
+    const dataFmt = formatDataIt(r.data);
+    tbody.appendChild(el("tr", null, `<td>${i + 1}</td><td>${escapeHtml(r.da)}</td><td>${escapeHtml(r.a)}</td><td>${escapeHtml(dataFmt)}</td><td class="num">${euro(r.importo)}</td>`));
   });
 }
 
@@ -363,7 +364,7 @@ function raggruppaDettaglioSpeseGenerali() {
     if (s.gruppoId && s.gruppoId.startsWith("__cena_")) return;
     const gid = s.gruppoId || `__voce_singola_${i}`;
     if (!mappa[gid]) {
-            const g = { gruppoId: gid, descrizione: s.descrizione, isNE: !!s.quote, pagatori: [], partecipanti: s.partecipanti || [], data: s.data || null };
+      const g = { gruppoId: gid, descrizione: s.descrizione, isNE: !!s.quote, pagatori: [], partecipanti: s.partecipanti || [], data: s.data || null };
       mappa[gid] = g;
       gruppi.push(g);
     }
@@ -429,11 +430,11 @@ function renderSpeseDettaglio() {
   const gruppi = raggruppaDettaglioSpeseGenerali();
   if (gruppi.length === 0) { container.innerHTML = `<p class="empty-note">Nessuna altra spesa inserita.</p>`; return; }
   gruppi.forEach(g => {
-       const totalePagato = g.pagatori.reduce((a, p) => a + p.importo, 0);
+    const totalePagato = g.pagatori.reduce((a, p) => a + p.importo, 0);
     const dataFmt = formatDataIt(g.data);
     const wrap = el("details", "cena-block");
     wrap.innerHTML = `<summary>${escapeHtml(baseTitolo(g.descrizione))} — ${euro(totalePagato)}${g.isNE ? " [NE]" : " (divisa in parti uguali)"}${dataFmt ? ` — 📅 ${escapeHtml(dataFmt)}` : ""}</summary>
-   <div class="cena-body">
+      <div class="cena-body">
         <div class="tbl-riepilogo-spesa"></div>
       </div>`;
     container.appendChild(wrap);
@@ -695,9 +696,10 @@ function renderListaRimborsi() {
   box.innerHTML = "";
   if (STATE.rimborsi.length === 0) { box.innerHTML = `<div class="empty-note">Nessun rimborso inserito.</div>`; return; }
   STATE.rimborsi.forEach((r, i) => {
+    const dataFmt = formatDataIt(r.data);
     const row = el("div", "list-row" + (editingRimborsoIndex === i ? " editing" : ""));
     row.innerHTML = `
-      <div class="list-main">${escapeHtml(r.da)} → ${escapeHtml(r.a)}: <strong>${euro(r.importo)}</strong></div>
+      <div class="list-main">${escapeHtml(r.da)} → ${escapeHtml(r.a)}: <strong>${euro(r.importo)}</strong>${dataFmt ? ` <span class="list-sub">📅 ${escapeHtml(dataFmt)}</span>` : ""}</div>
       <div class="list-actions">
         <button class="btn-icon edit" type="button">Modifica</button>
         <button class="btn-icon delete" type="button">Elimina</button>
@@ -722,6 +724,7 @@ function modificaRimborso(i) {
   document.querySelector("#f-rimb-da").value = r.da;
   document.querySelector("#f-rimb-a").value = r.a;
   document.querySelector("#f-rimb-importo").value = r.importo;
+  document.querySelector("#f-rimb-data").value = r.data || "";
   document.querySelector("#btn-rimborso-submit").textContent = "Salva modifiche";
   document.querySelector("#btn-rimborso-annulla").style.display = "inline-block";
   safeScrollIntoView(document.querySelector("#f-rimborso-form"));
@@ -1146,10 +1149,12 @@ async function submitRimborso(e) {
   const da = document.querySelector("#f-rimb-da").value;
   const a = document.querySelector("#f-rimb-a").value;
   const importo = parseFloat(document.querySelector("#f-rimb-importo").value);
+  const data = document.querySelector("#f-rimb-data").value;
   if (!da || !a || da === a) { setStatus("#status-rimborso", "Controlla i campi (da / a devono essere diversi).", true); return; }
   if (!(importo > 0)) { setStatus("#status-rimborso", "L'importo deve essere un numero maggiore di zero.", true); return; }
   try {
     const nuovo = { da, a, importo };
+    if (data) nuovo.data = data;
     let nuovoElenco;
     let msg;
     if (editingRimborsoIndex !== null) {
