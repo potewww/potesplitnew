@@ -54,6 +54,15 @@ function baseTitolo(desc) {
   return (desc || "").replace(/\s*\[NE\]\s*$/, "").trim();
 }
 
+// Formatta una data "YYYY-MM-DD" (formato nativo dell'input type=date) in "GG/MM/AAAA"
+// per la visualizzazione nelle liste. Restituisce stringa vuota se la data non è valida/assente.
+function formatDataIt(iso) {
+  if (!iso || typeof iso !== "string") return "";
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return "";
+  return `${m[3]}/${m[2]}/${m[1]}`;
+}
+
 // ---------- CARICAMENTO DATI (lettura statica, nessun bisogno di token) ----------
 async function loadAllData() {
   const bust = "?t=" + Date.now();
@@ -638,7 +647,7 @@ function raggruppaSpese() {
   STATE.spese.forEach((s, i) => {
     const gid = s.gruppoId || `__idx_${i}`;
     if (!mappa[gid]) {
-      const g = { gruppoId: gid, voci: [], isNE: !!s.quote, descrizione: s.descrizione, partecipanti: s.partecipanti || [], quote: s.quote || null };
+      const g = { gruppoId: gid, voci: [], isNE: !!s.quote, descrizione: s.descrizione, partecipanti: s.partecipanti || [], quote: s.quote || null, data: s.data || null };
       mappa[gid] = g;
       gruppi.push(g);
     }
@@ -656,10 +665,11 @@ function renderListaSpese() {
   gruppi.forEach(g => {
     const chiPaga = g.voci.map(s => `${escapeHtml(s.nome)} (${euro(s.importo)})`).join(", ");
     const part = formatPartecipanti(g.partecipanti);
+    const dataFmt = formatDataIt(g.data);
     const isEditing = editingSpesaGruppoId === g.gruppoId;
     const row = el("div", "list-row" + (isEditing ? " editing" : ""));
     row.innerHTML = `
-      <div class="list-main">${chiPaga} — ${escapeHtml(baseTitolo(g.descrizione))}${g.isNE ? " [NE]" : ""} <strong>${euro(g.totale)}</strong><br><span class="list-sub">Partecipanti: ${escapeHtml(part)}</span></div>
+      <div class="list-main">${chiPaga} — ${escapeHtml(baseTitolo(g.descrizione))}${g.isNE ? " [NE]" : ""} <strong>${euro(g.totale)}</strong>${dataFmt ? ` <span class="list-sub">📅 ${dataFmt}</span>` : ""}<br><span class="list-sub">Partecipanti: ${escapeHtml(part)}</span></div>
       <div class="list-actions">
         <button class="btn-icon edit" type="button">Modifica</button>
         <button class="btn-icon delete" type="button">Elimina</button>
@@ -728,9 +738,10 @@ function renderListaCene() {
   box.innerHTML = "";
   if (STATE.cene.length === 0) { box.innerHTML = `<div class="empty-note">Nessuna cena inserita.</div>`; return; }
   STATE.cene.forEach((c, i) => {
+    const dataFmt = formatDataIt(c.data);
     const row = el("div", "list-row" + (editingCenaIndex === i ? " editing" : ""));
     row.innerHTML = `
-      <div class="list-main">${escapeHtml(c.titolo)} <span class="list-sub">(${c.persone.length} persone)</span></div>
+      <div class="list-main">${escapeHtml(c.titolo)} <span class="list-sub">(${c.persone.length} persone)</span>${dataFmt ? ` <span class="list-sub">📅 ${dataFmt}</span>` : ""}</div>
       <div class="list-actions">
         <button class="btn-icon edit" type="button">Modifica</button>
         <button class="btn-icon delete" type="button">Elimina</button>
@@ -753,6 +764,8 @@ function modificaCena(i) {
   editingCenaIndex = i;
   document.querySelector("#sec-cena").classList.remove("collapsed");
   document.querySelector("#f-cena-titolo").value = c.titolo;
+  const inputDataCena = document.querySelector("#f-cena-data");
+  if (inputDataCena) inputDataCena.value = c.data || "";
 
   cenaPersoneDati = {};
   c.persone.forEach(p => {
@@ -1027,6 +1040,8 @@ function modificaSpesa(gruppoId) {
   editingSpesaGruppoId = gruppoId;
   const isNE = !!voci[0].quote;
   document.querySelector("#f-spesa-titolo").value = baseTitolo(voci[0].descrizione);
+  const inputDataSpesa = document.querySelector("#f-spesa-data");
+  if (inputDataSpesa) inputDataSpesa.value = voci[0].data || "";
 
   setSpesaPartecipantiSelezionati(voci[0].partecipanti || []);
 
@@ -1066,6 +1081,9 @@ async function submitSpesa(e) {
   if (!titolo) { setStatus("#status-spesa", "Inserisci un titolo.", true); return; }
   if (!validaOAvvisa(titolo, "Titolo spesa")) return;
 
+  const dataSpesaInput = document.querySelector("#f-spesa-data");
+  const dataSpesa = dataSpesaInput && dataSpesaInput.value ? dataSpesaInput.value : null;
+
   if (titoloGiaUsato(titolo, { gruppoSpesaId: editingSpesaGruppoId })) {
     setStatus("#status-spesa", `Esiste già una spesa o una cena con il titolo "${baseTitolo(titolo)}". Scegline uno diverso.`, true);
     return;
@@ -1100,6 +1118,7 @@ async function submitSpesa(e) {
     const nuoveVoci = nomiPagatori.map(nome => {
       const voce = { nome, descrizione: titolo, importo: pagatori[nome], partecipanti, gruppoId };
       if (nonEqua) voce.quote = quote;
+      if (dataSpesa) voce.data = dataSpesa;
       return voce;
     });
     let nuovoElenco;
@@ -1360,6 +1379,9 @@ async function submitCena(e) {
   if (!titolo) { setStatus("#status-cena", "Inserisci un titolo.", true); return; }
   if (!validaOAvvisa(titolo, "Titolo cena")) return;
 
+  const dataCenaInput = document.querySelector("#f-cena-data");
+  const dataCena = dataCenaInput && dataCenaInput.value ? dataCenaInput.value : null;
+
   if (titoloGiaUsato(titolo, { indiceCena: editingCenaIndex })) {
     setStatus("#status-cena", `Esiste già una cena o una spesa con il titolo "${baseTitolo(titolo)}". Scegline uno diverso.`, true);
     return;
@@ -1412,6 +1434,7 @@ async function submitCena(e) {
   for (const s of speseCondivise) { if (!validaOAvvisa(s.descrizione, "Descrizione spesa condivisa")) return; }
 
   const nuovaCena = { titolo, sconti, persone, speseCondivise, pagatori };
+  if (dataCena) nuovaCena.data = dataCena;
   try {
     let nuovoElenco;
     let msg;
