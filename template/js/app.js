@@ -287,7 +287,16 @@ function messaggioEventoSolata(evento) {
   if (evento.tipo === "solata") {
     return `<div class="evento-solata tipo-solata">💰 <strong>Solata applicata:</strong> è stato pagato ${euro(evento.importo)} in più rispetto al dovuto; l'importo corretto sarebbe stato <strong>${euro(evento.dovutoCorretto)}</strong>. Il surplus è stato ridistribuito equamente tra i partecipanti (colonna "Solata").</div>`;
   }
-  return `<div class="evento-solata tipo-controsolata">📉 <strong>Controsolata applicata:</strong> è stato pagato ${euro(evento.importo)} in meno rispetto al dovuto; l'importo corretto sarebbe stato <strong>${euro(evento.dovutoCorretto)}</strong>. Il deficit è stato ridistribuito equamente tra i partecipanti (colonna "Controsolata").</div>`;
+  let nota = "";
+  if (evento.saturati && evento.saturati.length) {
+    // Elenco delle persone (senza ripetizioni) per cui lo sconto è stato limitato al
+    // proprio consumo: l'eccedenza è stata ridistribuita sugli altri partecipanti.
+    const nomi = [...new Set(evento.saturati)];
+    const elenco = nomi.map(escapeHtml).join(", ");
+    const verbo = nomi.length === 1 ? "aveva diritto a più sconto di quanto consumato" : "avevano diritto a più sconto di quanto consumato";
+    nota = ` <br><span class="nota-tetto">⚠️ ${elenco} ${verbo}: lo sconto è stato limitato al proprio consumo (dovuto mai negativo) e l'eccedenza è stata ridistribuita sugli altri partecipanti.</span>`;
+  }
+  return `<div class="evento-solata tipo-controsolata">📉 <strong>Controsolata applicata:</strong> è stato pagato ${euro(evento.importo)} in meno rispetto al dovuto; l'importo corretto sarebbe stato <strong>${euro(evento.dovutoCorretto)}</strong>. Il deficit è stato ridistribuito equamente tra i partecipanti (colonna "Controsolata").${nota}</div>`;
 }
 
 // ---------- RENDER: CENE ----------

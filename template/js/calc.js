@@ -136,32 +136,91 @@ function distribuisciRestoCent(restoCent, partecipanti, totaleCorrente, cercaMin
 // ---------- SOLATA / CONTROSOLATA (generico, riusato da cene e da spese) ----------
 // "diff" = totale pagato - totale dovuto (di base).
 //   diff > 0  -> è stato pagato di più del dovuto: il surplus ("solata") viene ridistribuito
-//                in modo equo tra i partecipanti (aggiunto al loro dovuto).
+//                in modo equo tra i partecipanti (aggiunto al loro dovuto). Non c'è alcun
+//                rischio che qualcuno finisca "sotto zero" in questo verso, quindi resta una
+//                ripartizione equa e senza vincoli.
 //   diff < 0  -> è stato pagato di meno del dovuto: il deficit ("controsolata") viene
-//                ridistribuito in modo equo tra i partecipanti (sottratto dal loro dovuto).
-// Il resto non distribuibile in centesimi va, con lo stesso criterio in entrambi i casi,
-// a chi sta spendendo di meno al momento del calcolo (usando "totaleCorrente"); a parità di
-// importo speso, la persona viene scelta a caso tra chi è in pareggio.
+//                ridistribuito tra i partecipanti (sottratto dal loro dovuto), MA nessuno può
+//                ricevere più sconto di quanto abbia effettivamente consumato ("totaleCorrente",
+//                usato qui anche come tetto, non solo per lo spareggio dei centesimi): se la
+//                quota equa di qualcuno supererebbe il proprio consumo, quella persona viene
+//                "saturata" a sconto = consumo (dovuto finale a zero, mai negativo) e l'eccedenza
+//                che non può assorbire viene ridistribuita equamente tra gli altri partecipanti,
+//                a cascata (loro stessi possono saturarsi a loro volta, e così via).
+// Il resto non distribuibile in centesimi (l'ultimo residuo, sempre < numero di partecipanti
+// ancora coinvolti) va, con lo stesso criterio in entrambi i casi, a chi sta spendendo di meno
+// al momento del calcolo (solata) o di più (controsolata); a parità di importo speso, la persona
+// viene scelta a caso tra chi è in pareggio.
 // Restituisce null se non c'è nulla da ridistribuire (diff trascurabile).
 function calcolaSolataControsolata(diff, partecipanti, totaleCorrente) {
   if (!partecipanti || partecipanti.length === 0 || Math.abs(diff) <= 0.005) return null;
   const positivo = diff > 0;
   const magnitudo = Math.abs(diff);
-  const { shares, restoCent } = dividiInParti(magnitudo, partecipanti.length);
-  const valori = {};
-  // "valori" contiene SOLO le quote base (senza il resto): il resto va esclusivamente
-  // nei centesimini, per non contarlo due volte (una nella colonna solata/controsolata
-  // e una nei centesimini).
-  partecipanti.forEach((nome, i) => { valori[nome] = positivo ? shares[i] : -shares[i]; });
-  let restoInfoList = [];
-  if (restoCent > 0) {
-    // Solata (si aggiunge): ogni centesimo residuo va a chi sta spendendo di MENO.
-    // Controsolata (si toglie): ogni centesimo residuo va tolto a chi sta spendendo di PIÙ.
-    // Se i centesimi residui sono più di uno, vanno a persone DIVERSE (una a testa),
-    // scelte a caso tra i pari a ogni passo — non tutti sulla stessa persona.
-    restoInfoList = distribuisciRestoCent(restoCent, partecipanti, totaleCorrente, positivo, positivo ? 1 : -1);
+
+  if (positivo) {
+    const { shares, restoCent } = dividiInParti(magnitudo, partecipanti.length);
+    const valori = {};
+    // "valori" contiene SOLO le quote base (senza il resto): il resto va esclusivamente
+    // nei centesimini, per non contarlo due volte (una nella colonna solata e una nei
+    // centesimini).
+    partecipanti.forEach((nome, i) => { valori[nome] = shares[i]; });
+    let restoInfoList = [];
+    if (restoCent > 0) restoInfoList = distribuisciRestoCent(restoCent, partecipanti, totaleCorrente, true, 1);
+    return { tipo: "solata", importo: magnitudo, valori, restoInfoList, saturati: [] };
   }
-  return { tipo: positivo ? "solata" : "controsolata", importo: magnitudo, valori, restoInfoList };
+
+  // ---- Controsolata, con tetto per persona pari al proprio consumo ----
+  // Si lavora in centesimi interi per evitare derive di arrotondamento lungo i vari giri
+  // della cascata.
+  const capienzaCent = {};
+  partecipanti.forEach(nome => { capienzaCent[nome] = Math.max(0, Math.round((totaleCorrente[nome] || 0) * 100)); });
+  const magnitudoCent = Math.round(magnitudo * 100);
+  const capienzaTotale = partecipanti.reduce((s, n) => s + capienzaCent[n], 0);
+  // Caso limite: se il deficit da coprire superasse la capienza complessiva di TUTTI i
+  // partecipanti (nessuno ha consumato abbastanza da assorbirlo), non si può comunque
+  // andare sotto zero per nessuno: si distribuisce al massimo la capienza totale, e la
+  // parte davvero non assorbibile resta scoperta (pareggio non più garantito in questo
+  // scenario estremo, che in pratica non dovrebbe verificarsi con importi pagati validi).
+  const daDistribuireCent = Math.min(magnitudoCent, capienzaTotale);
+
+  const assegnatoCent = {};
+  partecipanti.forEach(n => assegnatoCent[n] = 0);
+  const saturati = [];
+  let attivi = partecipanti.filter(n => capienzaCent[n] > 0);
+  let rimanente = daDistribuireCent;
+  while (rimanente > 0 && attivi.length > 0) {
+    const quota = Math.floor(rimanente / attivi.length);
+    const daSaturareOra = attivi.filter(nome => (capienzaCent[nome] - assegnatoCent[nome]) <= quota);
+    if (daSaturareOra.length === 0) {
+      // La quota equa è sostenibile da tutti gli attivi rimasti: la si assegna e si esce
+      // dal ciclo di saturazione (resta solo l'ultimo resto indivisibile, gestito sotto).
+      attivi.forEach(nome => { assegnatoCent[nome] += quota; });
+      rimanente -= quota * attivi.length;
+      break;
+    }
+    daSaturareOra.forEach(nome => {
+      const residua = capienzaCent[nome] - assegnatoCent[nome];
+      assegnatoCent[nome] += residua;
+      rimanente -= residua;
+      saturati.push(nome);
+    });
+    attivi = attivi.filter(nome => !daSaturareOra.includes(nome));
+  }
+
+  const valori = {};
+  partecipanti.forEach(nome => { valori[nome] = -(assegnatoCent[nome] / 100); });
+
+  // Ultimo resto indivisibile (sempre < numero di attivi rimasti a questo punto): va, come
+  // per il caso senza tetto, a chi sta spendendo di più — ma scelto solo tra chi ha ancora
+  // capienza residua, per non violare il tetto anche qui.
+  let restoInfoList = [];
+  if (rimanente > 0 && attivi.length > 0) {
+    const totaleLocale = {};
+    attivi.forEach(nome => { totaleLocale[nome] = (totaleCorrente[nome] || 0) + valori[nome]; });
+    restoInfoList = distribuisciRestoCent(rimanente, attivi, totaleLocale, false, -1);
+  }
+
+  return { tipo: "controsolata", importo: daDistribuireCent / 100, valori, restoInfoList, saturati };
 }
 
 
@@ -289,7 +348,7 @@ function applicaSolataAutomatica(persone, sconti, quoteColonna, quoteSeparate, c
       if (centesiminiDettaglio) aggiungiContributo(centesiminiDettaglio, nome, valore);
     });
   }
-  return { tipo: risultato.tipo, importo: risultato.importo, dovutoCorretto: totgen };
+  return { tipo: risultato.tipo, importo: risultato.importo, dovutoCorretto: totgen, saturati: risultato.saturati || [] };
 }
 
 // Calcola tutte le quote di una cena (condivise + solata/controsolata automatiche)
@@ -425,7 +484,7 @@ function calcolaRiepilogoGruppoSpesa(gruppo) {
         aggiungiContributo(centesiminiDettaglio, nome, valore);
       });
     }
-    eventoSolata = { tipo: risultatoSC.tipo, importo: risultatoSC.importo, dovutoCorretto: totDovutoBase };
+    eventoSolata = { tipo: risultatoSC.tipo, importo: risultatoSC.importo, dovutoCorretto: totDovutoBase, saturati: risultatoSC.saturati || [] };
   }
 
   const dovutoFinale = {}, saldi = {};

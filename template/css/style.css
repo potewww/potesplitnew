@@ -284,3 +284,6 @@ table th[data-sort]::after { content: "⇅"; opacity: .45; font-size: .78em; pos
 table th[data-sort].sort-asc::after { content: "▲"; opacity: 1; }
 table th[data-sort].sort-desc::after { content: "▼"; opacity: 1; }
 table th[data-sort]:hover { filter: brightness(1.15); }
+
+/* ---------- Nota "tetto" controsolata (sconto limitato al consumo) ---------- */
+.nota-tetto { font-size: .82rem; opacity: .9; }
