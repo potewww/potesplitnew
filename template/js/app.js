@@ -108,63 +108,75 @@ function formatPartecipanti(partecipanti) {
   return [...partecipanti].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())).join(", ");
 }
 
-// ---------- ORDINAMENTO TABELLA REGISTRO SPESE ----------
-// campo: "n" (ordine originale dei dati) | "nome" (chi ha pagato) | "descrizione"
-// (titolo spesa) | "data" (cronologico) | "importo" (prezzo).
-// dir: 1 = crescente, -1 = decrescente.
+// ---------- ORDINAMENTO TABELLE ----------
+// Sistema generico di ordinamento riusato da tutte le tabelle ordinabili del sito
+// (Registro spese, Totali per persona, riepiloghi delle singole spese, totali delle
+// cene). Ogni tabella tiene un proprio oggetto sortState = {campo, dir}: campo è la
+// colonna attiva (o null se non è stato ancora scelto un ordinamento e si usa quello
+// "naturale" già presente nei dati), dir è 1 (crescente) o -1 (decrescente).
+
+// Confronto generico: "testo" per colonne alfabetiche, "numero" per colonne numeriche,
+// "data" per colonne con date in formato ISO (YYYY-MM-DD, ordinabili anche come stringhe).
+function confronta(tipo, va, vb) {
+  if (tipo === "numero") return (va || 0) - (vb || 0);
+  if (tipo === "data") return (va || "").localeCompare(vb || "");
+  return (va || "").toString().toLowerCase().localeCompare((vb || "").toString().toLowerCase());
+}
+
+// Aggancia il click alle intestazioni ordinabili (<th data-sort="...">) presenti dentro
+// `container` (un <table> o un wrapper che contiene una tabella) e aggiorna le frecce
+// ▲/▼. Un primo click su una colonna nuova ordina in modo crescente, un secondo click
+// sulla stessa colonna inverte la direzione. `ridisegna` viene richiamata ad ogni click:
+// essendo chiamata sullo stesso `container` già esistente nel DOM (non uno nuovo), lo
+// stato di ordinamento resta quello della SINGOLA istanza della tabella (utile quando ce
+// ne sono più copie sulla pagina, es. una per ogni cena o per ogni spesa).
+function agganciaOrdinamento(container, sortState, ridisegna) {
+  container.querySelectorAll("thead th[data-sort]").forEach(th => {
+    th.classList.toggle("sort-asc", th.dataset.sort === sortState.campo && sortState.dir === 1);
+    th.classList.toggle("sort-desc", th.dataset.sort === sortState.campo && sortState.dir === -1);
+    th.onclick = () => {
+      if (sortState.campo === th.dataset.sort) sortState.dir *= -1;
+      else { sortState.campo = th.dataset.sort; sortState.dir = 1; }
+      ridisegna();
+    };
+  });
+}
+
+// Definizione delle colonne ordinabili del Registro spese: "n" = ordine originale dei
+// dati, "nome" = chi ha pagato, "descrizione" = titolo spesa, "data" = cronologico,
+// "importo" = prezzo, "partecipanti" = elenco partecipanti (alfabetico).
+const CAMPI_REGISTRO = {
+  n: { tipo: "numero", val: s => s.nOriginale },
+  nome: { tipo: "testo", val: s => s.nome },
+  descrizione: { tipo: "testo", val: s => s.descrizione },
+  data: { tipo: "data", val: s => s.data },
+  importo: { tipo: "numero", val: s => s.importo },
+  partecipanti: { tipo: "testo", val: s => formatPartecipanti(s.partecipanti) }
+};
 let sortRegistro = { campo: "nome", dir: 1 };
 
-function confrontaRegistro(a, b, campo) {
-  switch (campo) {
-    case "n": return a.nOriginale - b.nOriginale;
-    case "data": return (a.data || "").localeCompare(b.data || "");
-    case "importo": return a.importo - b.importo;
-    case "descrizione": return a.descrizione.toLowerCase().localeCompare(b.descrizione.toLowerCase());
-    default: {
-      const c = a.nome.toLowerCase().localeCompare(b.nome.toLowerCase());
-      return c !== 0 ? c : a.descrizione.toLowerCase().localeCompare(b.descrizione.toLowerCase());
-    }
-  }
-}
-
-// Aggiorna le frecce ▲/▼ nell'intestazione della tabella in base al campo/direzione attivi.
-function aggiornaIndicatoriOrdinamento(tableId, sortState) {
-  document.querySelectorAll(`#${tableId} thead th[data-sort]`).forEach(th => {
-    th.classList.remove("sort-asc", "sort-desc");
-    if (th.dataset.sort === sortState.campo) th.classList.add(sortState.dir === 1 ? "sort-asc" : "sort-desc");
-  });
-}
-
-// Collega il click sulle intestazioni ordinabili di una tabella: un primo click su una
-// colonna nuova ordina in modo crescente, un secondo click sulla stessa colonna inverte
-// la direzione. `render` è la funzione di rendering da richiamare dopo ogni cambio.
-function initOrdinamentoTabella(tableId, sortState, render) {
-  document.querySelectorAll(`#${tableId} thead th[data-sort]`).forEach(th => {
-    th.addEventListener("click", () => {
-      const campo = th.dataset.sort;
-      if (sortState.campo === campo) sortState.dir *= -1;
-      else { sortState.campo = campo; sortState.dir = 1; }
-      render();
-    });
-  });
-}
-
 function renderRegistroSpese() {
-  const tbody = document.querySelector("#tbl-registro tbody");
+  const table = document.querySelector("#tbl-registro");
+  const tbody = table.querySelector("tbody");
   tbody.innerHTML = "";
   // Usa l'elenco calcolato (STATE.stato.spese), che include anche le voci [NE] generate
   // automaticamente da ogni cena — non il solo STATE.spese "grezzo" da spese.json.
   // nOriginale conserva l'ordine di partenza, usato dall'opzione di ordinamento "N.".
   const tutte = STATE.stato.spese.map((s, i) => ({ ...s, nOriginale: i }));
-  const { campo, dir } = sortRegistro;
-  const ordinate = [...tutte].sort((a, b) => confrontaRegistro(a, b, campo) * dir);
+  const def = CAMPI_REGISTRO[sortRegistro.campo] || CAMPI_REGISTRO.nome;
+  const ordinate = [...tutte].sort((a, b) => {
+    const c = confronta(def.tipo, def.val(a), def.val(b));
+    // A parità di valore, l'ordine per nome+descrizione resta stabile (comportamento
+    // storico di questa tabella prima che diventasse ordinabile).
+    return (c !== 0 ? c : confronta("testo", a.nome + a.descrizione, b.nome + b.descrizione)) * sortRegistro.dir;
+  });
   ordinate.forEach((s, i) => {
     const part = formatPartecipanti(s.partecipanti);
     const dataFmt = formatDataIt(s.data);
     const tr = el("tr", null, `<td>${i + 1}</td><td>${escapeHtml(s.nome)}</td><td>${escapeHtml(s.descrizione)}</td><td>${escapeHtml(dataFmt)}</td><td class="num">${euro(s.importo)}</td><td>${escapeHtml(part)}</td>`);
     tbody.appendChild(tr);
   });
-  aggiornaIndicatoriOrdinamento("tbl-registro", sortRegistro);
+  agganciaOrdinamento(table, sortRegistro, renderRegistroSpese);
 }
 
 function renderRimborsiEffettuati() {
@@ -180,18 +192,33 @@ function renderRimborsiEffettuati() {
   });
 }
 
+// Definizione delle colonne ordinabili di "Totali per persona": "n" = ordine originale,
+// "nome" = alfabetico, le altre sono tutte numeriche.
+const CAMPI_TOTALI = { n: "numero", nome: "testo", pagato: "numero", speso: "numero", rimbdati: "numero", rimbric: "numero", saldo: "numero" };
+let sortTotali = { campo: "nome", dir: 1 };
+
 function renderTotaliPersona() {
-  const tbody = document.querySelector("#tbl-totali tbody");
+  const table = document.querySelector("#tbl-totali");
+  const tbody = table.querySelector("tbody");
   tbody.innerHTML = "";
   const { nomi, totaliPersona, spesaEffettiva, rimborsatoDA, rimborsatoA, saldi } = STATE.stato;
-  nomi.forEach((nome, i) => {
-    const saldo = saldi[nome];
+  const righe = nomi.map((nome, i) => ({
+    nOriginale: i, nome,
+    pagato: totaliPersona[nome], speso: spesaEffettiva[nome],
+    rimbdati: rimborsatoDA[nome], rimbric: rimborsatoA[nome], saldo: saldi[nome]
+  }));
+  const campo = sortTotali.campo;
+  const valore = r => campo === "n" ? r.nOriginale : r[campo];
+  const ordinate = [...righe].sort((a, b) => confronta(CAMPI_TOTALI[campo] || "testo", valore(a), valore(b)) * sortTotali.dir);
+  ordinate.forEach((r, i) => {
+    const saldo = r.saldo;
     const cls = saldo < -0.005 ? "row-red" : saldo > 0.005 ? "row-green" : "row-gray";
-    const tr = el("tr", cls, `<td>${i + 1}</td><td>${escapeHtml(nome)}</td><td class="num">${euro(totaliPersona[nome])}</td>
-      <td class="num">${euro(spesaEffettiva[nome])}</td><td class="num">${euro(rimborsatoDA[nome])}</td>
-      <td class="num">${euro(rimborsatoA[nome])}</td><td class="num"><strong>${euro(saldo)}</strong></td>`);
+    const tr = el("tr", cls, `<td>${i + 1}</td><td>${escapeHtml(r.nome)}</td><td class="num">${euro(r.pagato)}</td>
+      <td class="num">${euro(r.speso)}</td><td class="num">${euro(r.rimbdati)}</td>
+      <td class="num">${euro(r.rimbric)}</td><td class="num"><strong>${euro(saldo)}</strong></td>`);
     tbody.appendChild(tr);
   });
+  agganciaOrdinamento(table, sortTotali, renderTotaliPersona);
 }
 
 function renderTransazioni() {
@@ -342,8 +369,19 @@ function renderCondivise(container, cena) {
 
 function renderTotaliECena(container, cena) {
   const d = calcolaDettaglioCena(cena);
-  let html = `<div class="table-wrap"><table class="cena-table"><thead><tr><th>Persona</th><th>Dovuto</th><th>Pagato</th><th>Saldo pasto</th></tr></thead><tbody>`;
-  d.righe.forEach(r => {
+  // Stato di ordinamento appeso al container stesso: così ogni cena ha la propria
+  // tabella ordinabile in modo indipendente dalle altre, e il click su un'intestazione
+  // ridisegna solo questa tabella senza toccare le altre cene in pagina.
+  if (!container._sortTotEC) container._sortTotEC = { campo: null, dir: 1 };
+  const sortState = container._sortTotEC;
+  const CAMPI = { persona: "testo", dovuto: "numero", pagato: "numero", saldo: "numero" };
+  let righe = d.righe;
+  if (sortState.campo) {
+    const key = sortState.campo === "persona" ? "nome" : sortState.campo;
+    righe = [...d.righe].sort((a, b) => confronta(CAMPI[sortState.campo], a[key], b[key]) * sortState.dir);
+  }
+  let html = `<div class="table-wrap"><table class="cena-table"><thead><tr><th data-sort="persona">Persona</th><th class="num" data-sort="dovuto">Dovuto</th><th class="num" data-sort="pagato">Pagato</th><th class="num" data-sort="saldo">Saldo pasto</th></tr></thead><tbody>`;
+  righe.forEach(r => {
     const cls = r.saldo > 0.005 ? "row-green" : r.saldo < -0.005 ? "row-red" : "";
     html += `<tr class="${cls}"><td>${escapeHtml(r.nome)}</td><td class="num">${euro(r.dovuto)}</td><td class="num">${euro(r.pagato)}</td><td class="num">${euro(r.saldo)}</td></tr>`;
   });
@@ -366,6 +404,7 @@ function renderTotaliECena(container, cena) {
     html += "</tbody></table></div>";
   }
   container.innerHTML = html;
+  agganciaOrdinamento(container, sortState, () => renderTotaliECena(container, cena));
 }
 
 function renderCene() {
@@ -424,11 +463,31 @@ function renderRiepilogoGruppoSpesa(container, g) {
   const r = (g.isNE && STATE.stato.riepilogoGruppi && STATE.stato.riepilogoGruppi[g.gruppoId])
     ? STATE.stato.riepilogoGruppi[g.gruppoId]
     : calcolaRiepilogoGruppoSpesa(g);
+  // Stato di ordinamento appeso al container: ogni spesa ha la propria tabella
+  // ordinabile in modo indipendente dalle altre spese elencate nella pagina.
+  if (!container._sortRiep) container._sortRiep = { campo: null, dir: 1 };
+  const sortState = container._sortRiep;
+  const CAMPI = { partecipanti: "testo", pagato: "numero", dovuto: "numero", centesimini: "numero", solata: "numero", controsolata: "numero", saldo: "numero" };
+  let nomiOrdinati = r.partecipanti;
+  if (sortState.campo) {
+    const valore = nome => {
+      switch (sortState.campo) {
+        case "partecipanti": return nome;
+        case "pagato": return r.pagato[nome] || 0;
+        case "dovuto": return r.dovutoFinale[nome] || 0;
+        case "centesimini": return r.centesimini[nome] || 0;
+        case "solata": return r.solata[nome] || 0;
+        case "controsolata": return r.controsolata[nome] || 0;
+        case "saldo": return r.saldi[nome] || 0;
+      }
+    };
+    nomiOrdinati = [...r.partecipanti].sort((a, b) => confronta(CAMPI[sortState.campo], valore(a), valore(b)) * sortState.dir);
+  }
   let html = `<div class="table-wrap"><table class="cena-table"><thead><tr>
-    <th>Partecipanti</th><th class="num">Ha pagato</th><th class="num">Ha speso</th>
-    <th class="num">Centesimini</th><th class="num">Solata</th><th class="num">Controsolata</th><th class="num">Saldo</th>
+    <th data-sort="partecipanti">Partecipanti</th><th class="num" data-sort="pagato">Ha pagato</th><th class="num" data-sort="dovuto">Ha speso</th>
+    <th class="num" data-sort="centesimini">Centesimini</th><th class="num" data-sort="solata">Solata</th><th class="num" data-sort="controsolata">Controsolata</th><th class="num" data-sort="saldo">Saldo</th>
     </tr></thead><tbody>`;
-  r.partecipanti.forEach(nome => {
+  nomiOrdinati.forEach(nome => {
     const saldo = r.saldi[nome] || 0;
     const cls = saldo > 0.005 ? "row-green" : saldo < -0.005 ? "row-red" : "";
     const centStr = formatEspressioneContributi(r.centesiminiDettaglio[nome]) || (r.centesimini[nome] ? r.centesimini[nome].toFixed(2) : "");
@@ -461,6 +520,7 @@ function renderRiepilogoGruppoSpesa(container, g) {
     html += "</tbody></table></div>";
   }
   container.innerHTML = html;
+  agganciaOrdinamento(container, sortState, () => renderRiepilogoGruppoSpesa(container, g));
 }
 
 function renderSpeseDettaglio() {
@@ -1638,7 +1698,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderHomeLink();
   await loadAllData();
   renderAll();
-  initOrdinamentoTabella("tbl-registro", sortRegistro, renderRegistroSpese);
   aggiornaVisibilitaModoSpesa();
   setSpesaPagatoriSelezionati([]); // di default nessun pagatore spuntato
   setCenaPagatoriSelezionati([]); // di default nessun pagatore spuntato
