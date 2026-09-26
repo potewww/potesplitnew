@@ -108,23 +108,63 @@ function formatPartecipanti(partecipanti) {
   return [...partecipanti].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())).join(", ");
 }
 
+// ---------- ORDINAMENTO TABELLA REGISTRO SPESE ----------
+// campo: "n" (ordine originale dei dati) | "nome" (chi ha pagato) | "descrizione"
+// (titolo spesa) | "data" (cronologico) | "importo" (prezzo).
+// dir: 1 = crescente, -1 = decrescente.
+let sortRegistro = { campo: "nome", dir: 1 };
+
+function confrontaRegistro(a, b, campo) {
+  switch (campo) {
+    case "n": return a.nOriginale - b.nOriginale;
+    case "data": return (a.data || "").localeCompare(b.data || "");
+    case "importo": return a.importo - b.importo;
+    case "descrizione": return a.descrizione.toLowerCase().localeCompare(b.descrizione.toLowerCase());
+    default: {
+      const c = a.nome.toLowerCase().localeCompare(b.nome.toLowerCase());
+      return c !== 0 ? c : a.descrizione.toLowerCase().localeCompare(b.descrizione.toLowerCase());
+    }
+  }
+}
+
+// Aggiorna le frecce ▲/▼ nell'intestazione della tabella in base al campo/direzione attivi.
+function aggiornaIndicatoriOrdinamento(tableId, sortState) {
+  document.querySelectorAll(`#${tableId} thead th[data-sort]`).forEach(th => {
+    th.classList.remove("sort-asc", "sort-desc");
+    if (th.dataset.sort === sortState.campo) th.classList.add(sortState.dir === 1 ? "sort-asc" : "sort-desc");
+  });
+}
+
+// Collega il click sulle intestazioni ordinabili di una tabella: un primo click su una
+// colonna nuova ordina in modo crescente, un secondo click sulla stessa colonna inverte
+// la direzione. `render` è la funzione di rendering da richiamare dopo ogni cambio.
+function initOrdinamentoTabella(tableId, sortState, render) {
+  document.querySelectorAll(`#${tableId} thead th[data-sort]`).forEach(th => {
+    th.addEventListener("click", () => {
+      const campo = th.dataset.sort;
+      if (sortState.campo === campo) sortState.dir *= -1;
+      else { sortState.campo = campo; sortState.dir = 1; }
+      render();
+    });
+  });
+}
+
 function renderRegistroSpese() {
   const tbody = document.querySelector("#tbl-registro tbody");
   tbody.innerHTML = "";
   // Usa l'elenco calcolato (STATE.stato.spese), che include anche le voci [NE] generate
   // automaticamente da ogni cena — non il solo STATE.spese "grezzo" da spese.json.
-  const tutte = STATE.stato.spese;
-  const ordinate = [...tutte].sort((a, b) => {
-    const an = a.nome.toLowerCase(), bn = b.nome.toLowerCase();
-    if (an === bn) return a.descrizione.toLowerCase().localeCompare(b.descrizione.toLowerCase());
-    return an.localeCompare(bn);
-  });
+  // nOriginale conserva l'ordine di partenza, usato dall'opzione di ordinamento "N.".
+  const tutte = STATE.stato.spese.map((s, i) => ({ ...s, nOriginale: i }));
+  const { campo, dir } = sortRegistro;
+  const ordinate = [...tutte].sort((a, b) => confrontaRegistro(a, b, campo) * dir);
   ordinate.forEach((s, i) => {
     const part = formatPartecipanti(s.partecipanti);
     const dataFmt = formatDataIt(s.data);
     const tr = el("tr", null, `<td>${i + 1}</td><td>${escapeHtml(s.nome)}</td><td>${escapeHtml(s.descrizione)}</td><td>${escapeHtml(dataFmt)}</td><td class="num">${euro(s.importo)}</td><td>${escapeHtml(part)}</td>`);
     tbody.appendChild(tr);
   });
+  aggiornaIndicatoriOrdinamento("tbl-registro", sortRegistro);
 }
 
 function renderRimborsiEffettuati() {
@@ -1598,6 +1638,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderHomeLink();
   await loadAllData();
   renderAll();
+  initOrdinamentoTabella("tbl-registro", sortRegistro, renderRegistroSpese);
   aggiornaVisibilitaModoSpesa();
   setSpesaPagatoriSelezionati([]); // di default nessun pagatore spuntato
   setCenaPagatoriSelezionati([]); // di default nessun pagatore spuntato
