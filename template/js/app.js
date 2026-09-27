@@ -483,7 +483,7 @@ function renderRiepilogoGruppoSpesa(container, g) {
       switch (sortState.campo) {
         case "partecipanti": return nome;
         case "pagato": return r.pagato[nome] || 0;
-        case "dovuto": return r.dovutoFinale[nome] || 0;
+        case "dovuto": return r.dovutoBase[nome] || 0;
         case "centesimini": return r.centesimini[nome] || 0;
         case "solata": return r.solata[nome] || 0;
         case "controsolata": return r.controsolata[nome] || 0;
@@ -502,16 +502,17 @@ function renderRiepilogoGruppoSpesa(container, g) {
     const centStr = formatEspressioneContributi(r.centesiminiDettaglio[nome]) || (r.centesimini[nome] ? r.centesimini[nome].toFixed(2) : "");
     html += `<tr class="${cls}"><td>${escapeHtml(nome)}</td>
       <td class="num">${r.pagato[nome] ? euro(r.pagato[nome]) : ""}</td>
-      <td class="num">${euro(r.dovutoFinale[nome] || 0)}</td>
+      <td class="num">${euro(r.dovutoBase[nome] || 0)}</td>
       <td class="num">${centStr}</td>
       <td class="num">${r.solata[nome] ? euro(r.solata[nome]) : ""}</td>
       <td class="num">${r.controsolata[nome] ? euro(r.controsolata[nome]) : ""}</td>
       <td class="num"><strong>${euro(saldo)}</strong></td></tr>`;
   });
+  const totDovutoBase = r.partecipanti.reduce((a, n) => a + (r.dovutoBase[n] || 0), 0);
   const totCentesimini = r.partecipanti.reduce((a, n) => a + (r.centesimini[n] || 0), 0);
   const totSolata = r.partecipanti.reduce((a, n) => a + (r.solata[n] || 0), 0);
   const totControsolata = r.partecipanti.reduce((a, n) => a + (r.controsolata[n] || 0), 0);
-  html += `<tr class="tot-row"><td><strong>Totale</strong></td><td class="num">${euro(r.totali.pagato)}</td><td class="num">${euro(r.totali.dovuto)}</td>
+  html += `<tr class="tot-row"><td><strong>Totale</strong></td><td class="num">${euro(r.totali.pagato)}</td><td class="num">${euro(totDovutoBase)}</td>
     <td class="num">${totCentesimini ? euro(totCentesimini) : ""}</td>
     <td class="num">${totSolata ? euro(totSolata) : ""}</td>
     <td class="num">${totControsolata ? euro(totControsolata) : ""}</td>
